@@ -1,0 +1,17 @@
+resources:
+  jobs:
+    finpay_semantic_job:
+      name: finpay_semantic_job
+      max_concurrent_runs: 1
+
+      email_notifications:
+        on_failure:
+          - katherine.obregon0302@gmail.com
+
+      tasks:
+        - task_key: refresh_materialized_views
+          sql_task:
+            file:
+              path: /Workspace/Users/katherine.obregon0302@gmail.com/finpay-lakehouse/notebooks/refresh_materialized_views.sql
+              source: WORKSPACE
+            warehouse_id: bd6c302295aeb578

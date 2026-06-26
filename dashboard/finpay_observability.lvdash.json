@@ -1,0 +1,451 @@
+{
+  "datasets": [
+    {
+      "name": "97e1bbc3",
+      "displayName": "pipeline_summary",
+      "queryLines": [
+        "-- Registros en Bronze\n",
+        "SELECT 'bronze' AS capa, 'transactions' AS fuente,\n",
+        "    COUNT(*) AS registros_entrada,\n",
+        "    COUNT(*) AS registros_ok,\n",
+        "    0 AS registros_rechazados\n",
+        "FROM fintech_finpay.bronze.transactions\n",
+        "\n",
+        "UNION ALL\n",
+        "SELECT 'bronze', 'merchants',\n",
+        "    COUNT(*), COUNT(*), 0\n",
+        "FROM fintech_finpay.bronze.merchants\n",
+        "\n",
+        "UNION ALL\n",
+        "SELECT 'bronze', 'users',\n",
+        "    COUNT(*), COUNT(*), 0\n",
+        "FROM fintech_finpay.bronze.users\n",
+        "\n",
+        "UNION ALL\n",
+        "-- Registros en Silver (ok)\n",
+        "SELECT 'silver', 'transactions',\n",
+        "    (SELECT COUNT(*) FROM fintech_finpay.bronze.transactions),\n",
+        "    COUNT(*),\n",
+        "    (SELECT COUNT(*) FROM fintech_finpay.bronze.transactions) - COUNT(*)\n",
+        "FROM fintech_finpay.silver.transactions\n",
+        "\n",
+        "UNION ALL\n",
+        "SELECT 'silver', 'merchants',\n",
+        "    (SELECT COUNT(*) FROM fintech_finpay.bronze.merchants),\n",
+        "    COUNT(*),\n",
+        "    (SELECT COUNT(*) FROM fintech_finpay.bronze.merchants) - COUNT(*)\n",
+        "FROM fintech_finpay.silver.merchants\n",
+        "\n",
+        "UNION ALL\n",
+        "SELECT 'silver', 'users',\n",
+        "    (SELECT COUNT(*) FROM fintech_finpay.bronze.users),\n",
+        "    COUNT(*),\n",
+        "    (SELECT COUNT(*) FROM fintech_finpay.bronze.users) - COUNT(*)\n",
+        "FROM fintech_finpay.silver.users\n",
+        "\n",
+        "UNION ALL\n",
+        "-- Registros en Gold\n",
+        "SELECT 'gold', 'reversal_rate',\n",
+        "    (SELECT COUNT(*) FROM fintech_finpay.silver.transactions),\n",
+        "    COUNT(*), 0\n",
+        "FROM fintech_finpay.gold.reversal_rate\n",
+        "\n",
+        "UNION ALL\n",
+        "SELECT 'gold', 'risk_score',\n",
+        "    (SELECT COUNT(*) FROM fintech_finpay.silver.merchants),\n",
+        "    COUNT(*), 0\n",
+        "FROM fintech_finpay.gold.risk_score\n",
+        "\n",
+        "UNION ALL\n",
+        "SELECT 'gold', 'channel_anomalies',\n",
+        "    (SELECT COUNT(*) FROM fintech_finpay.silver.transactions),\n",
+        "    COUNT(*), 0\n",
+        "FROM fintech_finpay.gold.channel_anomalies"
+      ]
+    },
+    {
+      "name": "6fe735ca",
+      "displayName": "top_riesgo",
+      "queryLines": [
+        "SELECT \n",
+        "    merchant_id, \n",
+        "    merchant_name, \n",
+        "    risk_level, \n",
+        "    tasa_reversa, \n",
+        "    risk_score\n",
+        "FROM fintech_finpay.gold.risk_score\n",
+        "WHERE risk_score IS NOT NULL\n",
+        "ORDER BY risk_score DESC\n",
+        "LIMIT 20"
+      ]
+    },
+    {
+      "name": "6180473e",
+      "displayName": "anomalias_por_canal",
+      "queryLines": [
+        "SELECT \n",
+        "    channel,\n",
+        "    COUNT(*) AS total_anomalias,\n",
+        "    ROUND(AVG(amount), 2) AS monto_promedio_anomalia\n",
+        "FROM fintech_finpay.gold.channel_anomalies\n",
+        "GROUP BY channel\n",
+        "ORDER BY total_anomalias DESC"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "5c7b7c03",
+      "displayName": "summary",
+      "layout": [
+        {
+          "widget": {
+            "name": "67c0e60c",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "97e1bbc3",
+                  "fields": [
+                    {
+                      "name": "capa",
+                      "expression": "`capa`"
+                    },
+                    {
+                      "name": "fuente",
+                      "expression": "`fuente`"
+                    },
+                    {
+                      "name": "sum(registros_ok)",
+                      "expression": "SUM(`registros_ok`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "mark": {
+                "colors": [
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 5
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 2
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 3
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 4
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 5
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 6
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 7
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 8
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 9
+                  },
+                  {
+                    "themeColorType": "visualizationColors",
+                    "position": 10
+                  }
+                ]
+              },
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "fuente",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(registros_ok)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "capa",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 7,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "42434444",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "97e1bbc3",
+                  "fields": [
+                    {
+                      "name": "capa",
+                      "expression": "`capa`"
+                    },
+                    {
+                      "name": "fuente",
+                      "expression": "`fuente`"
+                    },
+                    {
+                      "name": "sum(registros_rechazados)",
+                      "expression": "SUM(`registros_rechazados`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "fuente",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(registros_rechazados)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "fieldName": "capa",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 0,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "ea967bf3",
+            "queries": [
+              {
+                "name": "dashboards/01f17194da6d12a5b55e93ba8ecaf8f5/datasets/01f171a01d241dd99b5462578fa32038_capa",
+                "query": {
+                  "datasetName": "97e1bbc3",
+                  "fields": [
+                    {
+                      "name": "capa",
+                      "expression": "`capa`"
+                    },
+                    {
+                      "name": "capa_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "frame": {
+                "showTitle": true
+              },
+              "widgetType": "filter-single-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "capa",
+                    "queryName": "dashboards/01f17194da6d12a5b55e93ba8ecaf8f5/datasets/01f171a01d241dd99b5462578fa32038_capa"
+                  }
+                ]
+              }
+            }
+          },
+          "position": {
+            "x": 8,
+            "y": 6,
+            "width": 4,
+            "height": 1
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "781fdae9",
+      "displayName": "riesgo",
+      "layout": [
+        {
+          "widget": {
+            "name": "24a0e001",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6fe735ca",
+                  "fields": [
+                    {
+                      "name": "merchant_id",
+                      "expression": "`merchant_id`"
+                    },
+                    {
+                      "name": "merchant_name",
+                      "expression": "`merchant_name`"
+                    },
+                    {
+                      "name": "risk_score",
+                      "expression": "`risk_score`"
+                    },
+                    {
+                      "name": "tasa_reversa",
+                      "expression": "`tasa_reversa`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "table",
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "merchant_id"
+                  },
+                  {
+                    "fieldName": "merchant_name"
+                  },
+                  {
+                    "fieldName": "risk_score"
+                  },
+                  {
+                    "fieldName": "tasa_reversa"
+                  }
+                ]
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 0,
+            "width": 7,
+            "height": 7
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    },
+    {
+      "name": "69156211",
+      "displayName": "anomalias",
+      "layout": [
+        {
+          "widget": {
+            "name": "6d882892",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "6180473e",
+                  "fields": [
+                    {
+                      "name": "channel",
+                      "expression": "`channel`"
+                    },
+                    {
+                      "name": "sum(total_anomalias)",
+                      "expression": "SUM(`total_anomalias`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "channel",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "fieldName": "sum(total_anomalias)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "data": {
+                "queryName": "main_query"
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 1,
+            "width": 6,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS",
+      "layoutVersion": "GRID_V1"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    },
+    "applyModeEnabled": false
+  }
+}

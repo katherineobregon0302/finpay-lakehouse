@@ -1,0 +1,20 @@
+bundle:
+  name: finpay-lakehouse
+
+workspace:
+  host: https://dbc-9103ad8a-bdd5.cloud.databricks.com
+
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://dbc-9103ad8a-bdd5.cloud.databricks.com
+
+  prod:
+    mode: production
+    workspace:
+      host: https://dbc-9103ad8a-bdd5.cloud.databricks.com
+
+include:
+  - resources/*.yml

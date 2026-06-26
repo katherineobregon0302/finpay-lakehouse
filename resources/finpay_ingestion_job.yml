@@ -1,0 +1,38 @@
+resources:
+  jobs:
+    finpay_ingestion_job:
+      name: finpay_ingestion_job
+      max_concurrent_runs: 1
+
+      email_notifications:
+        on_failure:
+          - katherine.obregon0302@gmail.com
+
+      tasks:
+        - task_key: bronze
+          notebook_task:
+            notebook_path: /Workspace/Users/katherine.obregon0302@gmail.com/finpay-lakehouse/notebooks/01_bronze
+            source: WORKSPACE
+          max_retries: 2
+          min_retry_interval_millis: 300000
+          retry_on_timeout: true
+
+        - task_key: silver
+          depends_on:
+            - task_key: bronze
+          notebook_task:
+            notebook_path: /Workspace/Users/katherine.obregon0302@gmail.com/finpay-lakehouse/notebooks/02_silver
+            source: WORKSPACE
+          max_retries: 2
+          min_retry_interval_millis: 300000
+          retry_on_timeout: true
+
+        - task_key: gold
+          depends_on:
+            - task_key: silver
+          notebook_task:
+            notebook_path: /Workspace/Users/katherine.obregon0302@gmail.com/finpay-lakehouse/notebooks/03_gold
+            source: WORKSPACE
+          max_retries: 2
+          min_retry_interval_millis: 300000
+          retry_on_timeout: true
